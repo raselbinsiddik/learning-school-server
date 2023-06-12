@@ -96,19 +96,6 @@ async function run() {
             res.send(result);
         });
 
-        // app.get('/booked', verifyJWT, async (req, res) => {
-        //     const email = req.query.email;
-        //     if (!email) {
-        //         res.send([]);
-        //     }
-        //     const decodedEmail = req.decoded.email;
-        //     if (email !== decodedEmail) {
-        //         return res.status(403).send({ error: true, message: 'porbidden access' })
-        //     }
-        //     const query = { email: email };
-        //     const result = await studentsColection.find(query).toArray();
-        //     res.send(result);
-        // });
 
         app.get('/users',verifyJWT,verifyAdmin, async (req, res) => {
             const result = await usersCollection.find().toArray();
@@ -162,7 +149,7 @@ async function run() {
             res.send(result);
         });
 
-        app.get('/users/instructor/:email',verifyJWT,  async (req, res) => {
+        app.get('/users/instructor/:email',  async (req, res) => {
             const  email= req.params.email;
             console.log({ email });
             
