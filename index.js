@@ -3,6 +3,7 @@ const app = express();
 const cors = require('cors');
 require('dotenv').config();
 const jwt = require('jsonwebtoken');
+const stripe = require('stripe')(process.env.PAYMENT_SECRET_KEY);
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const port = process.env.PORT || 5000;
 
@@ -51,6 +52,7 @@ async function run() {
         const studentsColection = client.db("languageDb").collection("booked");
         const usersCollection = client.db("languageDb").collection("users");
         const addClassCollection = client.db("languageDb").collection("addClass");
+        const paymentCollection = client.db("languageDb").collection("payment");
 
 
         app.post('/jwt', async (req, res) => {
@@ -79,19 +81,34 @@ async function run() {
             res.send(result);
         });
 
-        app.get('/booked', async (req, res) => {
+        app.get('/booked', verifyJWT, async (req, res) => {
             const email = req.query.email;
+            console.log(email)
             if (!email) {
                 res.send([]);
             }
-            // const decodedEmail = req.decoded.email;
-            // if (email !== decodedEmail) {
-            //     return res.status(403).send({ error: true, message: 'porbidden access' })
-            // }
+            const decodedEmail = req.decoded.email;
+            if (email !== decodedEmail) {
+                return res.status(403).send({ error: true, message: 'porbidden  access' })
+            }
             const query = { email: email };
             const result = await studentsColection.find(query).toArray();
             res.send(result);
         });
+
+        // app.get('/booked', verifyJWT, async (req, res) => {
+        //     const email = req.query.email;
+        //     if (!email) {
+        //         res.send([]);
+        //     }
+        //     const decodedEmail = req.decoded.email;
+        //     if (email !== decodedEmail) {
+        //         return res.status(403).send({ error: true, message: 'porbidden access' })
+        //     }
+        //     const query = { email: email };
+        //     const result = await studentsColection.find(query).toArray();
+        //     res.send(result);
+        // });
 
         app.get('/users',verifyJWT,verifyAdmin, async (req, res) => {
             const result = await usersCollection.find().toArray();
@@ -198,6 +215,30 @@ async function run() {
             const result = await usersCollection.deleteOne(query);
             res.send(result);
         });
+
+        app.post('/create-payment-intent', verifyJWT, async (req, res) => {
+            const { price } = req.body;
+            console.log(price);
+            const amount = parseInt(price * 100);
+            const paymentIntent = await stripe.paymentIntents.create({
+                amount: amount,
+                currency: 'usd',
+                payment_method_types: ['card']
+            });
+            res.send({
+                clientSecret: paymentIntent.client_secret
+            })
+        });
+
+        app.post('/payment',verifyJWT, async (req, res) => {
+            const payment = req.body;
+            console.log(payment);
+            const insetResult = await paymentCollection.insertOne(payment);
+
+            const query = { _id: { $in: payment.ItemsId.map(id => new ObjectId(id)) } };
+            const deleteResult = await studentsColection.deleteOne(query);
+            res.send({ insetResult, deleteResult });
+        })
         // Send a ping to confirm a successful connection
         await client.db("admin").command({ ping: 1 });
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
