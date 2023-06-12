@@ -47,8 +47,8 @@ async function run() {
         // Connect the client to the server	(optional starting in v4.7)
         await client.connect();
 
-        const classColection = client.db("languageDb").collection("studentClass");
-        const instructorColection = client.db("languageDb").collection("instructor");
+        const classCollection = client.db("languageDb").collection("studentClass");
+        const instructorCollection = client.db("languageDb").collection("instructor");
         const studentsColection = client.db("languageDb").collection("booked");
         const usersCollection = client.db("languageDb").collection("users");
         const addClassCollection = client.db("languageDb").collection("addClass");
@@ -72,12 +72,12 @@ async function run() {
         }
 
         app.get('/studentClass', async (req, res) => {
-            const result = await classColection.find().toArray();
+            const result = await classCollection.find().toArray();
             res.send(result);
         });
 
         app.get('/instructor', async (req, res) => {
-            const result = await instructorColection.find().toArray();
+            const result = await instructorCollection.find().toArray();
             res.send(result);
         });
 
