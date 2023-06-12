@@ -235,10 +235,22 @@ async function run() {
             console.log(payment);
             const insetResult = await paymentCollection.insertOne(payment);
 
-            const query = { _id: { $in: payment.ItemsId.map(id => new ObjectId(id)) } };
+            const query = { _id: new ObjectId(payment.ItemsId) };
             const deleteResult = await studentsColection.deleteOne(query);
             res.send({ insetResult, deleteResult });
+        });
+
+        app.get('/payment', async (req, res) => {
+            console.log(req.query.email);
+            let query = {};
+            if (req.query?.email) {
+                query = { email: req.query.email };
+            }
+
+            const result = await paymentCollection.find(query).toArray();
+            res.send(result);
         })
+
         // Send a ping to confirm a successful connection
         await client.db("admin").command({ ping: 1 });
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
